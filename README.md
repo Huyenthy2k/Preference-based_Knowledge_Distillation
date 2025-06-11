@@ -1,97 +1,124 @@
-# PrefKD To-Do List
+# Preference-based Knowledge Distillation for Language Models
 
-- [x] calculate parent tokens for train/valid datasets
-- [ ] calculate weights for each parent tokens
-    - [ ] train contrastive teacher LLM
-    - [x] weight function
-- ~~[ ] gen COT samples~~
-- [x] bash file - eval script for baseline of teacher and student
-    - should include harmless and helpfulness
-    - use a reward model or cost model or guard model?
-    - llm as a judge: prometheus
-    - open llm leaderboard: ifeval, bbh
-- [ ] implement baseline models: use DSKD script
-- [ ] testing 
-- [x] thay ref model thành DPO teacher model
+Preference-based Knowledge Distillation is a framework for distilling knowledge from large language models (LLMs) to smaller models using preference-based learning and knowledge distillation techniques. The framework combines the benefits of preference alignment (DPO) with knowledge distillation to create more efficient and aligned student models.
 
-## Need adapt
-- [x] max length should be along token or parent token? -> fix from begining
-- each batch should contains:
-    - input_ids
-    - attention_mask
-    - weights
-    - parent_token_ids
-- [x] concanated inputs should concat the parent token list also
-- tính weight có cho prompt không? không
-- max len có ảnh hưởng tới tính parent token không? -> có, nên có 1 hàm set max len trong tokenize trước khi tính parent token
-    - nên theo batch hay universal?
+## Features
 
-## 1. Loss Implementation
-- [x] Implement parent token mechanism
-- [x] Add weight calculation functionality
-- [x] Develop token level logits handling
-- [x] DSKD
+- **Parent Token Mechanism**: Implements a novel approach to token-level knowledge distillation using parent tokens
+- **Weight Calculation**: Dynamic weight calculation for parent tokens to guide the distillation process
+- **Multiple Loss Functions**: Supports various loss functions including:
+  - DPO (Direct Preference Optimization)
+  - TIS-DPO (Token-level Importance Sampling DPO)
+  - DSKD (Distillation with Soft Knowledge)
+  - Custom loss combinations
 
+## Project Structure
 
-## 2. Data Processing
-- [x] Format the dataset for training (chat template, train on completion, etc)
+```
+PrefKD/
+├── src/
+│   └── prefkd/
+│       ├── config/         # Configuration files
+│       ├── loss/          # Loss function implementations
+│       ├── utils/         # Utility functions
+│       ├── weight/        # Weight calculation modules
+│       ├── train.py       # Main training script
+│       └── trainers.py    # Trainer implementations
+├── script/               # Training and evaluation scripts
+├── run_train/           # Training run configurations
+├── run_eval/            # Evaluation run configurations
+└── config/              # Hydra configuration files
+```
 
+## Installation
 
-## 3. Evaluation
-**Models**
-- Teacher: Mistral 7B v3 (32k vocab)
-- Student: (phi 3/3.5 3.8B (32k vocab) /) qwen 2.5 1.5B
+1. Clone the repository:
+```bash
+git clone https://github.com/Huyenthy2k/DPO_distillation
+cd PrefKD
+```
 
-**Benchmark**
-<!-- - [ ] MTBench
-- [ ] AlpacaEval -->
-- [ ] OpenLLM Leaderboard
-- [ ] Anthropic HH
+2. Create and activate a conda environment:
+```bash
+conda env create -f train_env.yaml
+conda activate prefkd
+```
 
+3. Install additional dependencies:
+```bash
+pip install -r requirements.txt
+```
 
-## 4. Baseline
-- [ ] Teacher base
-- [ ] Student base
-**Preference Alignment Baseline**
-- [ ] DPO
-- [ ] TIS-DPO
+## Environment Setup
 
-**Cross-tokenizer KD Baseline**
-- [ ] DSKD
-- [ ] ULD
-- [ ] CDM
+1. Create a `.env` file in the project root with your API tokens:
+```
+HUGGINGFACE_TOKEN=your_huggingface_token_here
+WANDB_API_KEY=your_wandb_token_here
+```
 
-## 5. Ablation Study
-- [ ] Discard DSKD loss
-- [ ] impact of weights?
+2. Make sure the `.env` file is in `.gitignore` to keep your tokens secure.
 
-# Notes
-- **SET ALL SEEDS TO 1 FOR REPRODUCIBLE!!**
+## Usage
 
-## Data for training
-**Based on the method to decide**
-- Preference data: [link](https://huggingface.co/datasets/tonyshelby/ultra-feedback_v7)
-<!-- - SFT data: Deita 10k V0 -->
+### Training
 
-## Training Procedures
-- [ ] Initialize 2 model with SFT
-- [ ] Train 2 contrastive model to calculate weights
-- [ ] Train the students model
-- train on completion only: still tokenize full prompt + answer to calculate logits, but only use the answer part to calculate loss
+1. Configure your training parameters in the config files under `config/`
+2. Run training:
+```bash
+python src/prefkd/train.py
+```
 
-## Considerations for method tuning
-- Should include SeqKL type in the loss or not? Maybe not, the sequence level is include by DSKD distill loss
-- calculate with teacher and student? dont understand
-- should I include weights into COT2Align framework? (the empirical distribution?)
-- should I use base or instruct model? I need to ensure similar data distribution along different phases. -> base
-- [ ] check parent token meaning -> find original motivation in the paper for weight meaning, the if weight for parent token has any meaning.
-- derive the paper carefully
-    - weight calculation formula, why is that form, what goal trying to achieve
-    - why we calculate parent token probs like that? what meaning, what goals? perplexity? why we only take local from element of sub token? what meaning?
-- [ ] connect 2 loss naturally -> token level and sequence level
-- [ ] include COT? -> not sure, but it is a good idea -> step level control
-- [ ] review computational graph -> what to detach
-- [ ] tune the threshold of weights, consider weight transform.
-    note: trong code tis dpo không có clamp như trong công thức, ngược lại có weight transform
-- [ ] try different optimizer
-- [ ] try differrent KL function
+### Evaluation
+
+Run evaluation scripts from the `run_eval/` directory:
+```bash
+bash run_eval/eval_script.sh
+```
+
+## Models
+
+### Teacher Models
+- Mistral 7B v3 (32k vocab)
+
+### Student Models
+- Qwen 2.5 1.5B
+- Phi 3/3.5 3.8B (optional)
+
+## Benchmarks
+
+The framework supports evaluation on:
+- OpenLLM Leaderboard
+- Anthropic HH (Helpful & Harmless)
+- Custom benchmarks
+
+## Development Status
+
+### Completed
+- [x] Parent token mechanism implementation
+- [x] Weight calculation functionality
+- [x] Token-level logits handling
+- [x] DSKD implementation
+- [x] Dataset formatting and processing
+- [x] Basic evaluation scripts
+
+### In Progress
+- [ ] Comprehensive evaluation suite
+- [ ] Additional baseline implementations
+- [ ] Ablation studies
+- [ ] Performance optimizations
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+[Add your license here]
+
+## Citation
+
+If you use this code in your research, please cite:
+```
+[Add citation information]
+```
