@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 
 os.environ["WANDB_SILENT"] = "true"
 import resource
@@ -26,10 +27,22 @@ from utils.utils import (
 
 torch.backends.cuda.matmul.allow_tf32 = True
 
-# Replace 'your_token_here' with the token you got from Hugging Face
-login(token="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")
+# Load environment variables from .env file
+load_dotenv()
 
-wandb.login(key="ac6e358c9e02e44fdccee1c0c68e4a7ea095bafb")
+# Get tokens from environment variables
+huggingface_token = os.getenv("HUGGINGFACE_TOKEN")
+wandb_token = os.getenv("WANDB_API_KEY")
+
+if huggingface_token:
+    login(token=huggingface_token)
+else:
+    print("Warning: HUGGINGFACE_TOKEN not found in environment variables")
+
+if wandb_token:
+    wandb.login(key=wandb_token)
+else:
+    print("Warning: WANDB_API_KEY not found in environment variables")
 
 OmegaConf.register_new_resolver(
     "get_local_run_dir", lambda exp_name, local_dir: get_local_run_dir(exp_name, local_dir)
